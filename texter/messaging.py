@@ -67,8 +67,10 @@ class Directory:
 
     people: dict[str, Subscriber] = field(default_factory=dict)
     approved_names: set[str] = field(default_factory=set)
+    approved_addresses: dict[str, str] = field(default_factory=dict)
     owner_id: str = "owner"
     pending_notice: set[str] = field(default_factory=set)
+    owner_notified: set[str] = field(default_factory=set)
 
     def add(self, person: Subscriber) -> None:
         self.people[person.subscriber_id] = person
@@ -133,7 +135,8 @@ class Texter:
             return sent
         if person is not None and person.opted_out and word != "join":
             return sent
-        name = _match_name(message.body, self.directory.approved_names)
+        expected = self.directory.approved_addresses.get(message.sender)
+        name = expected if expected and message.body.strip().lower() == expected.lower() else None
         if name and (person is None or person.status != "active"):
             if person is None:
                 person = Subscriber(
@@ -155,6 +158,7 @@ class Texter:
             key = message.sender
             if key not in self.directory.pending_notice:
                 self.directory.pending_notice.add(key)
+                self.directory.owner_notified.add(key)
                 owner = self.directory.people.get(self.directory.owner_id)
                 if owner is not None:
                     notice = Outbound(
@@ -170,7 +174,8 @@ class Texter:
         if event in {"weekly", "midweek"}:
             return self.deliver_to_active(forecast, event)
         if event == "thursday_check":
-            if not self.directory.pending_notice:
+            pending = self.directory.pending_notice - self.directory.owner_notified
+            if not pending:
                 return []
             owner = self.directory.people.get(self.directory.owner_id)
             if owner is None:
@@ -182,6 +187,8 @@ class Texter:
                     "owner_notice",
                 )
             )
+            if result.accepted:
+                self.directory.owner_notified.update(pending)
             return [result]
         return []
 

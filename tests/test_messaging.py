@@ -19,7 +19,11 @@ FORECAST = "Monday forecast."
 
 def service() -> tuple[Texter, RecordingTransport, Directory]:
     transport = RecordingTransport()
-    directory = Directory(approved_names={"Ada", "Bea", "Cam"}, owner_id="owner")
+    directory = Directory(
+        approved_names={"Ada", "Bea", "Cam"},
+        approved_addresses={"+15551110001": "Ada", "+15551110001b": "Bea"},
+        owner_id="owner",
+    )
     directory.add(Subscriber("owner", "Owner", "+15550000000", status="active"))
     return Texter(transport, directory), transport, directory
 
@@ -43,7 +47,7 @@ class MessagingTests(unittest.TestCase):
 
     def test_stop_opts_out_and_blocks_scheduled_delivery(self):
         texter, transport, _directory = service()
-        texter.handle_inbound(Inbound("+15551110001", "Bea", "in-4"), WELCOME)
+        texter.handle_inbound(Inbound("+15551110001", "Ada", "in-4"), WELCOME)
         texter.handle_inbound(Inbound("+15551110001", "STOP", "in-5"), WELCOME)
         texter.run_schedule("weekly", FORECAST)
         self.assertFalse(any(item.to == "+15551110001" and item.kind == "weekly" for item in transport.sent))
@@ -51,7 +55,7 @@ class MessagingTests(unittest.TestCase):
 
     def test_alert_is_not_sent_twice(self):
         texter, transport, _directory = service()
-        texter.handle_inbound(Inbound("+15551110001", "Cam", "in-6"), WELCOME)
+        texter.handle_inbound(Inbound("+15551110001", "Ada", "in-6"), WELCOME)
         first = texter.deliver_alert("alert-1", "2026-09-28T00:00:00Z", "🚨 Air Quality Alert")
         second = texter.deliver_alert("alert-1", "2026-09-28T00:00:00Z", "🚨 Air Quality Alert")
         updated = texter.deliver_alert("alert-1", "2026-09-28T01:00:00Z", "🚨 Air Quality Alert updated")
@@ -77,10 +81,11 @@ class MessagingTests(unittest.TestCase):
     def test_thursday_check_reminds_owner_after_random_join(self):
         texter, transport, _directory = service()
         texter.handle_inbound(Inbound("+15553330003", "Pat", "in-7"), WELCOME)
-        before = len(transport.sent)
+        notices = [item for item in transport.sent if item.kind == "owner_notice"]
         texter.run_schedule("thursday_check", "")
-        self.assertGreater(len(transport.sent), before)
-        self.assertEqual(transport.sent[-1].kind, "owner_notice")
+        texter.run_schedule("thursday_check", "")
+        self.assertEqual(len([item for item in transport.sent if item.kind == "owner_notice"]), len(notices))
+        self.assertEqual(len(notices), 1)
 
     def test_twilio_adapter_parses_webhook_and_does_not_call_network(self):
         transport = RecordingTransport()

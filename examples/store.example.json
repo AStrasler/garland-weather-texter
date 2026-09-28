@@ -1,0 +1,13 @@
+{
+  "subscribers": [],
+  "approvals": [
+    {
+      "name": "Example Person",
+      "address": "+15551110000"
+    }
+  ],
+  "owner_address": "+15550000000",
+  "alert_receipts": {},
+  "owner_notified": [],
+  "unapproved_attempts": []
+}

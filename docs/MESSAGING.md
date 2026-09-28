@@ -61,7 +61,13 @@ Put these in the environment or a secret store, never in git:
 - Confirmation that the 10DLC campaign is approved
 - `GARLAND_ALLOW_LIVE_SEND=1` only for the one intentional test
 
-The adapter in `texter/messaging.py` will not open a Twilio connection by itself. Tests use a recording transport and send nothing.
+The deployable path is `texter/service.py` with `texter/store.py` and `texter/twilio.py`. A sender is active only when the owner has already approved that exact number and the inbound text matches the name bound to it. Texting an approved name from another number does not join.
+
+`GARLAND_ALLOW_LIVE_SEND` defaults off. Scheduled jobs call the adapter and send nothing until that switch is `1` and credentials are present. The webhook rejects a missing or invalid `X-Twilio-Signature`.
+
+Alert receipts are stored per recipient. A retry sends only to addresses that do not already have that alert update. One unapproved attempt records a single owner notice. The Thursday check does not send a second notice for that same attempt.
+
+The adapter in `texter/twilio.py` does not open a connection unless live send is enabled and an HTTP transport is injected. Tests use a recording transport and send nothing.
 
 ## What a move would change
 

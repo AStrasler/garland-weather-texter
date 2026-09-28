@@ -3,5 +3,6 @@ config.json
 recipients.json
 approved.json
 sent-alerts.json
+store.json
 __pycache__/
 .venv/
