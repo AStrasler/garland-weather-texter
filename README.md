@@ -13,7 +13,7 @@ All times are America/Chicago.
 | Every 15 minutes | New or updated NWS alerts only |
 | Thursday 3:00 p.m. | Text the owner only if someone who was not approved tried to join |
 
-Forecast and alert rules are in [docs/RULES.md](docs/RULES.md). What Gamut does for texting, scheduling, and replies is in [docs/GAMUT.md](docs/GAMUT.md).
+Forecast and alert rules are in [docs/RULES.md](docs/RULES.md). What Gamut does for texting, scheduling, and replies is in [docs/GAMUT.md](docs/GAMUT.md). A provider-independent messaging interface, and what a real-number test would require, is in [docs/MESSAGING.md](docs/MESSAGING.md).
 
 ## What works without Gamut
 
