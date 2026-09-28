@@ -56,8 +56,9 @@ class TwilioAdapter:
             {"Authorization": "Basic redacted", "X-Kind": kind},
         )
         if status >= 400:
-            return SendResult(False, error=f"provider status {status}")
-        return SendResult(True, provider_message_id=response[:64])
+            return SendResult(False, error=f"provider status {status}", detail=response[:180])
+        sid, message_status = _sid_and_status(response)
+        return SendResult(True, provider_message_id=sid, detail=message_status)
 
     @staticmethod
     def parse_webhook(params: dict[str, str]) -> Inbound:
@@ -73,5 +74,39 @@ class TwilioAdapter:
         return self.parse_webhook(params)
 
 
+def _sid_and_status(response: str) -> tuple[str, str]:
+    import json
+
+    try:
+        payload = json.loads(response)
+    except json.JSONDecodeError:
+        return "", ""
+    return str(payload.get("sid") or ""), str(payload.get("status") or "")
+
+
 def form_body(params: dict[str, str]) -> str:
     return urlencode(params)
+
+
+def urllib_post(account_sid: str, auth_token: str) -> HttpPost:
+    import urllib.error
+    import urllib.request
+
+    def post(url: str, params: dict[str, str], headers: dict[str, str]) -> tuple[int, str]:
+        token = base64.b64encode(f"{account_sid}:{auth_token}".encode()).decode()
+        request = urllib.request.Request(
+            url,
+            data=urlencode(params).encode(),
+            method="POST",
+            headers={
+                "Authorization": f"Basic {token}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return response.status, response.read().decode()
+        except urllib.error.HTTPError as error:
+            return error.code, error.read().decode()
+
+    return post

@@ -13,7 +13,7 @@ All times are America/Chicago.
 | Every 15 minutes | New or updated NWS alerts only |
 | Thursday 3:00 p.m. | Text the owner only if someone who was not approved tried to join |
 
-Forecast and alert rules are in [docs/RULES.md](docs/RULES.md). What Gamut does for texting, scheduling, and replies is in [docs/GAMUT.md](docs/GAMUT.md). A provider-independent messaging interface, and what a real-number test would require, is in [docs/MESSAGING.md](docs/MESSAGING.md).
+Forecast and alert rules are in [docs/RULES.md](docs/RULES.md). What Gamut does for texting, scheduling, and replies is in [docs/GAMUT.md](docs/GAMUT.md). A provider-independent messaging interface is in [docs/MESSAGING.md](docs/MESSAGING.md). The one-number Twilio trial test is in [docs/OWNER_TEST.md](docs/OWNER_TEST.md). It does not run unless live send is enabled.
 
 ## What works without Gamut
 

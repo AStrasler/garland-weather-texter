@@ -34,6 +34,7 @@ class SendResult:
     accepted: bool
     provider_message_id: str = ""
     error: str = ""
+    detail: str = ""
 
 
 class Transport(Protocol):
