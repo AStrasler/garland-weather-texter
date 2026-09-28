@@ -31,12 +31,20 @@ def forecast_body() -> str:
     return render(days, "", active_alerts(config))
 
 
+def to_e164(raw: str) -> str:
+    cleaned = "".join(ch for ch in raw.strip() if ch.isdigit() or ch == "+")
+    if cleaned.startswith("+") and cleaned[1:].isdigit():
+        return cleaned
+    if len(cleaned) == 10 and cleaned.isdigit():
+        return f"+1{cleaned}"
+    if len(cleaned) == 11 and cleaned.startswith("1"):
+        return f"+{cleaned}"
+    raise SystemExit("phone secret must be one US number")
+
+
 def owner_destination(environ: dict[str, str] | None = None) -> str:
     env = environ if environ is not None else os.environ
-    raw = env.get("TWILIO_TO", "").strip()
-    if not raw.startswith("+") or not raw[1:].isdigit():
-        raise SystemExit("TWILIO_TO must be one E.164 number")
-    return raw
+    return to_e164(env.get("TWILIO_TO", ""))
 
 
 def run_owner_test(environ: dict[str, str] | None = None, http_post=None) -> dict:
@@ -44,7 +52,7 @@ def run_owner_test(environ: dict[str, str] | None = None, http_post=None) -> dic
     if not live_send_enabled(env):
         return {"sent": False, "reason": "live send disabled"}
     destination = owner_destination(env)
-    sender = env.get("TWILIO_FROM", "").strip()
+    sender = to_e164(env.get("TWILIO_FROM", ""))
     account_sid = env.get("TWILIO_ACCOUNT_SID", "").strip()
     auth_token = env.get("TWILIO_AUTH_TOKEN", "").strip()
     if not sender.startswith("+") or not account_sid or not auth_token:

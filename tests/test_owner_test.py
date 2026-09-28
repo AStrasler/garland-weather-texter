@@ -47,6 +47,27 @@ class OwnerTestTests(unittest.TestCase):
         self.assertEqual(calls, ["+15551110001"])
         self.assertEqual(outcome["sid"], "SM123")
 
+    def test_ten_digit_us_number_is_sent_as_e164(self):
+        calls = []
+
+        def post(url, params, headers):
+            calls.append(params["To"])
+            return 201, json.dumps({"sid": "SM124", "status": "queued"})
+
+        outcome = run_owner_test(
+            {
+                "GARLAND_ALLOW_LIVE_SEND": "1",
+                "TWILIO_ACCOUNT_SID": "AC_test",
+                "TWILIO_AUTH_TOKEN": "token",
+                "TWILIO_FROM": "5557650000",
+                "TWILIO_TO": "5551110001",
+                "GARLAND_TEST_BODY": "forecast",
+            },
+            http_post=post,
+        )
+        self.assertTrue(outcome["sent"])
+        self.assertEqual(calls, ["+15551110001"])
+
     def test_refuses_a_list_of_numbers(self):
         with self.assertRaises(SystemExit):
             run_owner_test(
