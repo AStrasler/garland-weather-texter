@@ -1,0 +1,25 @@
+{
+  "timezone": "America/Chicago",
+  "weekly_forecast": {
+    "cron": "0 19 * * 0",
+    "when": "Sunday 7:00 p.m.",
+    "script": "texter/sms_forecast.py"
+  },
+  "midweek_update": {
+    "cron": "0 7 * * 3",
+    "when": "Wednesday 7:00 a.m.",
+    "script": "texter/sms_forecast.py",
+    "note": "Same message format as Sunday. No extra title."
+  },
+  "alerts": {
+    "cron": "*/15 * * * *",
+    "when": "Every 15 minutes",
+    "script": "texter/alerts.py",
+    "note": "Send only when STATUS is new. Do not text when there is no new alert."
+  },
+  "new_subscriber_check": {
+    "when": "Thursday 3:00 p.m.",
+    "mechanism": "Same-conversation reminder, not the forecast cron.",
+    "note": "Text the owner only if someone who is not on the approved list tried to join. Do not remind the owner just because approved people have not opted in."
+  }
+}

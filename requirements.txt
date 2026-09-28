@@ -1,0 +1,2 @@
+# The compiler uses the Python 3.11+ standard library only.
+# No third-party packages are required to build a forecast or check alerts.

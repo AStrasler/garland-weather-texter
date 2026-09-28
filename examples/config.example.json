@@ -1,0 +1,7 @@
+{
+  "label": "Garland, TX 75041",
+  "latitude": 32.8804,
+  "longitude": -96.6496,
+  "timezone": "America/Chicago",
+  "nws_forecast_url": "https://api.weather.gov/gridpoints/FWD/95,110/forecast"
+}

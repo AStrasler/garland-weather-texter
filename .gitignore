@@ -1,0 +1,7 @@
+.env
+config.json
+recipients.json
+approved.json
+sent-alerts.json
+__pycache__/
+.venv/

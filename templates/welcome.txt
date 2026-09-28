@@ -1,0 +1,9 @@
+You're on the Garland weather texts.
+
+Sunday at 7:00pm: the week ahead.
+Wednesday at 7:00am: the midweek update.
+Both use the same format.
+
+🚨 Alerts are texted as they are issued.
+
+Times are Central.
