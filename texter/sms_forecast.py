@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -20,6 +21,7 @@ SOURCE_PAGES = (
     "https://www.wfaa.com/weather",
     "https://www.nbcdfw.com/weather/",
 )
+NEWS_HOSTS = ("fox4news.com", "wfaa.com", "nbcdfw.com")
 
 
 def load_env() -> None:
@@ -42,6 +44,33 @@ def get_text(url: str) -> str:
 
 def get_json(url: str) -> dict:
     return json.loads(get_text(url))
+
+
+def is_news_url(url: str) -> bool:
+    try:
+        parts = urllib.parse.urlsplit(url)
+        host = parts.hostname or ""
+        return (parts.scheme == "https" and parts.username is None and parts.password is None
+                and parts.port in (None, 443)
+                and any(host == allowed or host.endswith("." + allowed) for allowed in NEWS_HOSTS))
+    except ValueError:
+        return False
+
+
+class NewsRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not is_news_url(newurl):
+            raise urllib.error.URLError("news redirect destination is not allowed")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def get_news_text(url: str) -> str:
+    if not is_news_url(url):
+        raise urllib.error.URLError("news destination is not allowed")
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    opener = urllib.request.build_opener(NewsRedirectHandler())
+    with opener.open(req, timeout=25) as resp:
+        return resp.read().decode("utf-8", "replace")
 
 
 def local_today(now: datetime | None = None) -> datetime:
@@ -74,13 +103,13 @@ def fetch_news(today: datetime) -> str:
     seen = set()
     for page in SOURCE_PAGES:
         try:
-            html = get_text(page)
+            html = get_news_text(page)
         except Exception:
             continue
         if page_is_today(html, today):
             chunks.append(visible_text(html)[:4000])
         for href in re.findall(r'href="(https://[^"]+)"', html):
-            if href in seen or not any(host in href for host in ("fox4news.com", "wfaa.com", "nbcdfw.com")):
+            if href in seen or not is_news_url(href):
                 continue
             if "/weather" not in href and "/article/weather" not in href:
                 continue
@@ -88,10 +117,10 @@ def fetch_news(today: datetime) -> str:
             if len(seen) > 8:
                 break
             try:
-                article = get_text(href)
+                article = get_news_text(href)
             except Exception:
                 continue
-            if page_is_today(article):
+            if page_is_today(article, today):
                 chunks.append(visible_text(article)[:5000])
     return "\n".join(chunks)
 
