@@ -68,6 +68,7 @@ class SafeHttpTests(unittest.TestCase):
             )
         self.assertIs(result, response)
         build_opener.assert_called_once()
+        self.assertIsInstance(build_opener.call_args.args[0], NoRedirectHandler)
         opener.open.assert_called_once_with(request, timeout=7)
 
     def test_weather_scripts_keep_standalone_imports(self):
