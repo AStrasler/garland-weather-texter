@@ -1,4 +1,4 @@
-import subprocess
+import runpy
 import sys
 import unittest
 import urllib.error
@@ -81,21 +81,12 @@ class SafeHttpTests(unittest.TestCase):
 
     def test_weather_scripts_keep_standalone_imports(self):
         script_dir = Path(__file__).resolve().parents[1] / "texter"
-        code = (
-            "import importlib, sys; "
-            "sys.path[0] = sys.argv[1]; "
-            "importlib.import_module(sys.argv[2])"
-        )
-        for module in ("alerts", "sms_forecast"):
-            with self.subTest(module=module):
-                result = subprocess.run(
-                    [sys.executable, "-c", code, str(script_dir), module],
-                    cwd=script_dir.parent,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                self.assertEqual(result.returncode, 0, result.stderr)
+        with patch.object(sys, "path", [str(script_dir), *sys.path[1:]]):
+            for script in ("alerts.py", "sms_forecast.py"):
+                with self.subTest(script=script):
+                    runpy.run_path(
+                        str(script_dir / script), run_name="standalone_import_test"
+                    )
 
 
 if __name__ == "__main__":
