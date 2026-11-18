@@ -37,6 +37,7 @@ def validate_https_url(
         or parts.username is not None
         or parts.password is not None
         or parts.fragment
+        or "#" in url
         or port not in (None, 443)
     ):
         raise ValueError("URL must be an HTTPS URL without credentials or a fragment")
@@ -61,5 +62,12 @@ def open_https_url(
     """Open an approved HTTPS request without following redirects."""
     url = request.full_url if isinstance(request, urllib.request.Request) else request
     validate_https_url(url, allowed_hosts=allowed_hosts, allow_subdomains=allow_subdomains)
+    if isinstance(request, urllib.request.Request):
+        request = urllib.request.Request(
+            url,
+            data=request.data,
+            headers=dict(request.header_items()),
+            method=request.get_method(),
+        )
     opener = urllib.request.build_opener(NoRedirectHandler())
     return opener.open(request, timeout=timeout)

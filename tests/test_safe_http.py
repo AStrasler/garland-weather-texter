@@ -24,6 +24,7 @@ class SafeHttpTests(unittest.TestCase):
             "https://api.weather.gov:8443/alerts",
             "https://api.weather.gov./alerts",
             "https://api.weather.gov/alerts#fragment",
+            "https://api.weather.gov/alerts#",
             "https://[invalid/alerts",
         )
         for url in unsafe:
@@ -62,6 +63,8 @@ class SafeHttpTests(unittest.TestCase):
         opener = Mock()
         opener.open.return_value = response
         request = urllib.request.Request("https://api.weather.gov/alerts")
+        request.add_header("X-Test", "preserved")
+        request.host = "evil.test"
         with patch("urllib.request.build_opener", return_value=opener) as build_opener:
             result = open_https_url(
                 request, allowed_hosts={"api.weather.gov"}, timeout=7
@@ -69,7 +72,12 @@ class SafeHttpTests(unittest.TestCase):
         self.assertIs(result, response)
         build_opener.assert_called_once()
         self.assertIsInstance(build_opener.call_args.args[0], NoRedirectHandler)
-        opener.open.assert_called_once_with(request, timeout=7)
+        opened_request = opener.open.call_args.args[0]
+        self.assertIsNot(opened_request, request)
+        self.assertEqual(opened_request.full_url, "https://api.weather.gov/alerts")
+        self.assertEqual(opened_request.host, "api.weather.gov")
+        self.assertEqual(opened_request.get_header("X-test"), "preserved")
+        opener.open.assert_called_once_with(opened_request, timeout=7)
 
     def test_weather_scripts_keep_standalone_imports(self):
         script_dir = Path(__file__).resolve().parents[1] / "texter"
