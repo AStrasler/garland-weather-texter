@@ -2,6 +2,8 @@ import json
 import unittest
 import urllib.request
 
+from texter.safe_http import open_https_url
+
 
 class NwsLiveTests(unittest.TestCase):
     def test_forecast_and_alerts_are_public(self):
@@ -13,7 +15,7 @@ class NwsLiveTests(unittest.TestCase):
             "https://api.weather.gov/gridpoints/FWD/95,110/forecast",
             headers=headers,
         )
-        with urllib.request.urlopen(forecast, timeout=30) as resp:
+        with open_https_url(forecast, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
             periods = json.load(resp)["properties"]["periods"]
         self.assertGreaterEqual(len(periods), 7)
         self.assertIn("temperature", periods[0])
@@ -22,7 +24,7 @@ class NwsLiveTests(unittest.TestCase):
             "https://api.weather.gov/alerts/active?point=32.8804,-96.6496",
             headers=headers,
         )
-        with urllib.request.urlopen(alerts, timeout=30) as resp:
+        with open_https_url(alerts, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
             body = json.load(resp)
         self.assertIn("features", body)
 

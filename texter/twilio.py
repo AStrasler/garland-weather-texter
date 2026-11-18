@@ -11,6 +11,7 @@ from typing import Callable
 from urllib.parse import urlencode
 
 from texter.messaging import Inbound, Outbound, SendResult
+from texter.safe_http import open_https_url
 
 
 HttpPost = Callable[[str, dict[str, str], dict[str, str]], tuple[int, str]]
@@ -104,7 +105,7 @@ def urllib_post(account_sid: str, auth_token: str) -> HttpPost:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with open_https_url(request, allowed_hosts={"api.twilio.com"}, timeout=30) as response:
                 return response.status, response.read().decode()
         except urllib.error.HTTPError as error:
             return error.code, error.read().decode()

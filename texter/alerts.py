@@ -8,6 +8,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+if __package__:
+    from .safe_http import open_https_url
+else:
+    from safe_http import open_https_url
+
 CONFIG_PATH = Path(__file__).with_name("config.json")
 STATE_PATH = Path(__file__).with_name("sent-alerts.json")
 USER_AGENT = "GamutWeatherAgent/1.0 (alert check for Garland TX)"
@@ -29,7 +34,7 @@ def get_json(url: str) -> dict:
         url,
         headers={"User-Agent": USER_AGENT, "Accept": "application/geo+json"},
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with open_https_url(req, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
         return json.load(resp)
 
 
