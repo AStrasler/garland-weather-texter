@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from texter.safe_http import open_https_url
+
 CONFIG_PATH = Path(__file__).with_name("config.json")
 USER_AGENT = "GamutWeatherAgent/1.0 (Garland forecast)"
 TZ = ZoneInfo("America/Chicago")
@@ -38,7 +40,7 @@ def load_env() -> None:
 
 def get_text(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=25) as resp:
+    with open_https_url(req, allowed_hosts={"api.openweathermap.org"}, timeout=25) as resp:
         return resp.read().decode("utf-8", "replace")
 
 
@@ -178,7 +180,7 @@ def nws_days(config: dict, now: datetime) -> list[dict]:
         url,
         headers={"User-Agent": USER_AGENT, "Accept": "application/geo+json"},
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with open_https_url(req, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
         periods = json.load(resp)["properties"]["periods"]
     grouped: dict[str, dict] = {}
     for period in periods:
@@ -232,7 +234,7 @@ def fill_missing_lows(config: dict, grouped: dict[str, dict], now: datetime) -> 
         headers={"User-Agent": USER_AGENT, "Accept": "application/geo+json"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with open_https_url(req, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
             values = json.load(resp)["properties"]["minTemperature"]["values"]
     except Exception:
         return
@@ -364,7 +366,7 @@ def active_alerts(config: dict) -> list[str]:
         headers={"User-Agent": USER_AGENT, "Accept": "application/geo+json"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with open_https_url(req, allowed_hosts={"api.weather.gov"}, timeout=30) as resp:
             data = json.load(resp)
     except Exception:
         return []
