@@ -12,7 +12,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from texter.safe_http import open_https_url
+if __package__:
+    from .safe_http import open_https_url
+else:
+    from safe_http import open_https_url
 
 CONFIG_PATH = Path(__file__).with_name("config.json")
 USER_AGENT = "GamutWeatherAgent/1.0 (Garland forecast)"

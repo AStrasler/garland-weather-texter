@@ -1,6 +1,9 @@
+import subprocess
+import sys
 import unittest
 import urllib.error
 import urllib.request
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from texter.safe_http import NoRedirectHandler, open_https_url, validate_https_url
@@ -66,6 +69,24 @@ class SafeHttpTests(unittest.TestCase):
         self.assertIs(result, response)
         build_opener.assert_called_once()
         opener.open.assert_called_once_with(request, timeout=7)
+
+    def test_weather_scripts_keep_standalone_imports(self):
+        script_dir = Path(__file__).resolve().parents[1] / "texter"
+        code = (
+            "import importlib, sys; "
+            "sys.path[0] = sys.argv[1]; "
+            "importlib.import_module(sys.argv[2])"
+        )
+        for module in ("alerts", "sms_forecast"):
+            with self.subTest(module=module):
+                result = subprocess.run(
+                    [sys.executable, "-c", code, str(script_dir), module],
+                    cwd=script_dir.parent,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
